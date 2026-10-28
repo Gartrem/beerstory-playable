@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>БирСтори / Beerstore</title>
+<style>
+@font-face{font-family:Beer;src:url('game-font.otf')}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;background:#102c30 url('valley.jpg') center/cover}body{display:grid;place-items:center;background-blend-mode:multiply}#frame{position:relative;overflow:hidden}canvas{width:100%;height:100%;display:block;outline:none}#loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:25px;background:linear-gradient(#071d23c9,#071d23f0),url('valley.jpg') center/cover;color:#ffedbd;font:clamp(20px,3vw,32px) Beer,sans-serif;text-align:center;padding:24px}#loading[hidden]{display:none}#logo{width:min(80%,520px);max-height:30vh;object-fit:contain}progress{width:min(75%,430px);height:22px;appearance:none;border:3px solid #d79327;border-radius:14px;overflow:hidden;background:#07222b}progress::-webkit-progress-bar{background:#07222b}progress::-webkit-progress-value{background:linear-gradient(#ffe19a,#ed9a20)}progress::-moz-progress-bar{background:#ed9a20}#retry{border:2px solid #e8af40;border-radius:12px;padding:10px 30px;background:#146777;color:#ffe6b3;font:inherit;cursor:pointer}
+</style><script src="yandex-bridge.js"></script></head><body>
+<div id="frame"><canvas id="unity-canvas" tabindex="0"></canvas><div id="loading"><img id="logo" src="logo-ru.png" alt="БирСтори"><span id="status">Готовим приключение…</span><progress id="progress" value="0" max="1"></progress><button id="retry" hidden>Повторить</button></div></div>
+<script>
+'use strict';
+const frame=document.getElementById('frame'),canvas=document.getElementById('unity-canvas'),bar=document.getElementById('progress'),statusText=document.getElementById('status');
+function resize(){let w=innerWidth,h=innerHeight;if(w>h*2)w=h*2;if(h>w*2)h=w*2;frame.style.width=w+'px';frame.style.height=h+'px';}
+resize();addEventListener('resize',resize);addEventListener('orientationchange',resize);
+canvas.addEventListener('contextmenu',event=>event.preventDefault());document.addEventListener('dragstart',event=>event.preventDefault());
+canvas.addEventListener('pointerdown',()=>{canvas.focus();const sdk=BeerYG.state.sdk;if((sdk?.deviceInfo?.isMobile?.()||sdk?.deviceInfo?.isTablet?.()) && sdk?.screen?.fullscreen?.status==='off'){Promise.resolve(sdk.screen.fullscreen.request()).catch(()=>{});}});
+addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code))event.preventDefault();});
+async function sdk(){await new Promise(resolve=>{const script=document.createElement('script');script.src='/sdk.js';script.onload=resolve;script.onerror=resolve;document.head.append(script);});return BeerYG.init();}
+async function boot(){try{const platform=await sdk();const en=(platform?.environment?.i18n?.lang||navigator.language).slice(0,2)!=='ru';document.documentElement.lang=en?'en':'ru';document.title=en?'Beerstore':'БирСтори';document.getElementById('logo').src=en?'logo-en.png':'logo-ru.png';document.getElementById('logo').alt=en?'Beerstore':'БирСтори';statusText.textContent=en?'Preparing your adventure…':'Готовим приключение…';
+ const script=document.createElement('script');script.src='Build/YandexWebGL.loader.js';await new Promise((resolve,reject)=>{script.onload=resolve;script.onerror=reject;document.body.append(script);});
+ const instance=await createUnityInstance(canvas,{dataUrl:'Build/YandexWebGL.data.unityweb',frameworkUrl:'Build/YandexWebGL.framework.js.unityweb',codeUrl:'Build/YandexWebGL.wasm.unityweb',streamingAssetsUrl:'StreamingAssets',companyName:'GLMSSC',productName:'Beerstore',productVersion:'1.0.0',devicePixelRatio:Math.min(devicePixelRatio||1,2),matchWebGLToCanvasSize:true},value=>{bar.value=value;});BeerYG.bind(instance);
+ }catch(error){statusText.textContent=document.documentElement.lang==='en'?'Could not load the adventure. Please retry.':'Не удалось загрузить приключение. Попробуй ещё раз.';const retry=document.getElementById('retry');retry.textContent=document.documentElement.lang==='en'?'Retry':'Повторить';retry.hidden=false;retry.onclick=()=>location.reload();console.error('Game loading failed:',error);}}
+boot();
+</script></body></html>
+
